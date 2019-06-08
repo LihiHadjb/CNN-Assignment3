@@ -22,7 +22,22 @@ def char_maps(text: str):
     # It's best if you also sort the chars before assigning indices, so that
     # they're in lexical order.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    char_to_idx = dict()
+    idx_to_char = dict()
+    chars = []
+    
+    for letter in text:
+        if letter not in chars:
+            chars.append(letter)
+            
+    list.sort(chars)
+    for i, letter in enumerate(chars):
+        char_to_idx[letter] = i
+        idx_to_char[i] = letter
+    
+    
+    
+    #raise NotImplementedError()
     # ========================
     return char_to_idx, idx_to_char
 
@@ -38,7 +53,14 @@ def remove_chars(text: str, chars_to_remove):
     """
     # TODO: Implement according to the docstring.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    text_clean = ""
+    n_removed = 0
+    for char in text:
+        if char not in chars_to_remove:
+            text_clean += char
+            n_removed += 1
+
+ 
     # ========================
     return text_clean, n_removed
 
@@ -58,7 +80,20 @@ def chars_to_onehot(text: str, char_to_idx: dict) -> Tensor:
     """
     # TODO: Implement the embedding.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    N = len(text)
+    D = len(char_to_idx)
+    result = torch.zeros(N, D, dtype=torch.int8)
+    #src = torch.ones(1, D,  dtype=torch.int8)
+    indices = torch.LongTensor([char_to_idx[char] for char in text])
+    #indices = indices.repeat(N,1)
+    #result.scatter_(0, indices, src)
+    
+    
+    #need to fix scatter and delete the following line!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    for i in range(N):
+        result[i][indices[i]] = 1
+
+ 
     # ========================
     return result
 
@@ -75,7 +110,21 @@ def onehot_to_chars(embedded_text: Tensor, idx_to_char: dict) -> str:
     """
     # TODO: Implement the reverse-embedding.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    N = len(idx_to_char)
+    nonzeros = torch.nonzero(embedded_text)
+    #indices = torch.index_select(nonzeros, 1, torch.tensor(1))
+    #ones = torch.tensor(1)
+    #ones = ones.expand(N, 1)
+    #indices = nonzeros.gather(0, torch.LongTensor(ones))
+    
+    #need to fix gather and delete the following line!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    indices = [row[1].item() for row in nonzeros]
+
+   
+    result = ""
+    for idx in indices:
+        result = result + idx_to_char[idx]
+   
     # ========================
     return result
 
@@ -104,7 +153,31 @@ def chars_to_labelled_samples(text: str, char_to_idx: dict, seq_len: int,
     # 3. Create the labels tensor in a similar way and convert to indices.
     # Note that no explicit loops are required to implement this function.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    samples = chars_to_onehot(text, char_to_idx)
+    samples = samples.narrow(0,0,len(text)-1) #delete last row (i.e. last char in text) 
+    samples = torch.split(samples, seq_len, 0) #samples is now a tuple of sequences. 
+    
+    #if len(text) is not divisble by seq_len, the last element in samples will contain less than seq_len chars. The stack function needs arguments of the same shape, so now we need to remove those remaining lines
+    if len(text)%seq_len!=0:
+        samples = samples[:len(samples)-1]
+    
+    samples = torch.stack(samples)
+    
+    #to create the labels, remove the first char in text (by this we "move" every char one step to the right)
+    labels = chars_to_onehot(text, char_to_idx)
+    labels.narrow(0,1,len(text)-1) #delete first char
+    nonzeros = torch.nonzero(labels)
+    #need to fix gather and delete the following line!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    result = []
+    for n in range(len(labels)):
+        for row in range(seq_len):
+            mid_result=[]
+            for col in range(len(char_to_idx)):
+                if labels[n][row][col].item() == 1:
+                    mid_result.append(col).item()
+            result.append(mid_result)
+    
+    labels = result
     # ========================
     return samples, labels
 
