@@ -78,15 +78,9 @@ def chars_to_onehot(text: str, char_to_idx: dict) -> Tensor:
 
     N = len(text)
     D = len(char_to_idx)
-    result = torch.zeros(N, D, dtype=torch.int8)
-    indices = torch.LongTensor([char_to_idx[char] for char in text])
-    #print(indices.shape)
-    #print(result.shape)
-    #result.scatter_(0, indices, 1)
-    for i in range(len(text)):
-        result[i][indices[i]] = 1
-    
-    #result.scatter_(-1, indices, 1)#put later!!!!!!
+    result = torch.zeros(N,D , dtype=torch.int8)
+    indices = torch.tensor([char_to_idx[letter] for letter in text]).view(-1, 1)
+    result.scatter_(-1, indices, 1)
 
 
 
@@ -106,13 +100,11 @@ def onehot_to_chars(embedded_text: Tensor, idx_to_char: dict) -> str:
     embedding.
     """
     # TODO: Implement the reverse-embedding.
-    # ====== YOUR CODE: ======
-    N = len(idx_to_char)
-    nonzeros = torch.nonzero(embedded_text)
-    indices = nonzeros[:,1].tolist()
-    result = ""
-    for idx in indices:
-        result = result + idx_to_char[idx]
+    # ====== YOUR CODE: ======  
+    indices = (embedded_text == 1).nonzero()
+    result = [idx_to_char[idx] for idx in indices[:,1].tolist()]
+    result = ''.join(result)
+ 
 
     #raise NotImplementedError()
     # ========================
@@ -143,6 +135,14 @@ def chars_to_labelled_samples(text: str, char_to_idx: dict, seq_len: int,
     # 3. Create the labels tensor in a similar way and convert to indices.
     # Note that no explicit loops are required to implement this function.
     # ====== YOUR CODE: ======
+#     r = len(text) % seq_len
+#     samples = chars_to_onehot(text[:-r], char_to_idx).view((-1, seq_len, len(char_to_idx))).to(device)
+#     labels = torch.tensor(list(map(lambda c: char_to_idx[c],text[1:-r + 1])), device=device).view((-1, seq_len))
+    
+    
+    
+    
+    
     samples = chars_to_onehot(text, char_to_idx).to(device)   
     labels = torch.argmax(samples, dim=1).to(device)
     
@@ -158,7 +158,7 @@ def chars_to_labelled_samples(text: str, char_to_idx: dict, seq_len: int,
     
     samples = torch.stack(samples)
     labels = torch.stack(labels)
-    #raise NotImplementedError()
+#     #raise NotImplementedError()
     # ========================
     return samples, labels
 
@@ -222,12 +222,14 @@ def generate_from_model(model, start_sequence, n_chars, char_maps, T):
             x = chars_to_onehot(out_text, char_to_idx).to(device)
             x = x.to(dtype=torch.float)
             x = x.unsqueeze(0)
-            y, h_s = model(x, hidden_state)
+            y, hidden_state = model(x, hidden_state)
             probs = hot_softmax(y[0, -1, :], temperature=T)
             letter_index = torch.multinomial(probs,1).item()
             new = idx_to_char[letter_index]
             new_chars.append(new)
-            out_text = start_sequence + ''.join(new_chars)
+            out_text = new
+        out_text = start_sequence + ''.join(new_chars)
+
 
     #raise NotImplementedError()
     # ========================
@@ -373,3 +375,5 @@ class MultilayerGRU(nn.Module):
         #raise NotImplementedError()
         # ========================
         return layer_output, hidden_state
+
+
