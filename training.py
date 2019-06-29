@@ -215,7 +215,6 @@ class Trainer(abc.ABC):
 
         return EpochResult(losses=losses, accuracy=accuracy)
 
-
 class RNNTrainer(Trainer):
     def __init__(self, model, loss_fn, optimizer, device=None):
         super().__init__(model, loss_fn, optimizer, device)
@@ -252,8 +251,8 @@ class RNNTrainer(Trainer):
         # ====== YOUR CODE: ======
 
         self.optimizer.zero_grad()
-        pred, h = self.model(x, self.hidden_state)
-        #self.hidden_state = hidden_state.detach()
+        pred, hidden_state = self.model(x, self.hidden_state)
+        self.hidden_state = hidden_state.detach()
         pred = pred.view((-1, x.shape[-1]))
         y = y.view((-1))
         loss = self.loss_fn(pred, y)
@@ -281,14 +280,25 @@ class RNNTrainer(Trainer):
             # - Loss calculation
             # - Calculate number of correct predictions
             # ====== YOUR CODE: ======
-            pred, h = self.model(x, self.hidden_state)
-            pred = pred.view((-1, x.shape[-1]))
+#             pred, self.hidden_state = self.model(x, self.hidden_state)
+#             pred = pred.view((-1, x.shape[-1]))
+#             y = y.view((-1))
+#             loss = self.loss_fn(pred, y)
+
+#             preds = torch.argmax(pred, 1)
+#             num_correct = torch.sum((y == preds))
+            
+            
+            
+            
+            
+            logits, self.hidden_state = self.model(x, self.hidden_state)
+            logits = logits.view((-1, x.shape[-1]))
             y = y.view((-1))
-            loss = self.loss_fn(pred, y)
-
-            preds = torch.argmax(pred, 1)
-            num_correct = torch.sum((y == preds))
-
+            loss = self.loss_fn(logits, y)
+            num_correct = torch.sum(torch.argmax(logits, dim=1) == y)
+            
+            
             # raise NotImplementedError()
             # ========================
 
