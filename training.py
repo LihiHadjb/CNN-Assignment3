@@ -280,29 +280,18 @@ class RNNTrainer(Trainer):
             # - Loss calculation
             # - Calculate number of correct predictions
             # ====== YOUR CODE: ======
-#             pred, self.hidden_state = self.model(x, self.hidden_state)
-#             pred = pred.view((-1, x.shape[-1]))
-#             y = y.view((-1))
-#             loss = self.loss_fn(pred, y)
 
-#             preds = torch.argmax(pred, 1)
-#             num_correct = torch.sum((y == preds))
-            
-            
-            
-            
-            
-            logits, self.hidden_state = self.model(x, self.hidden_state)
-            logits = logits.view((-1, x.shape[-1]))
+            pred, self.hidden_state = self.model(x, self.hidden_state)
+            pred = logits.view((-1, x.shape[-1]))
             y = y.view((-1))
             loss = self.loss_fn(logits, y)
             num_correct = torch.sum(torch.argmax(logits, dim=1) == y)
-            
-            
+
             # raise NotImplementedError()
             # ========================
 
         return BatchResult(loss.item(), num_correct.item() / seq_len)
+
 
 
 
