@@ -135,12 +135,6 @@ def chars_to_labelled_samples(text: str, char_to_idx: dict, seq_len: int,
     # 3. Create the labels tensor in a similar way and convert to indices.
     # Note that no explicit loops are required to implement this function.
     # ====== YOUR CODE: ======
-#     r = len(text) % seq_len
-#     samples = chars_to_onehot(text[:-r], char_to_idx).view((-1, seq_len, len(char_to_idx))).to(device)
-#     labels = torch.tensor(list(map(lambda c: char_to_idx[c],text[1:-r + 1])), device=device).view((-1, seq_len))
-    
-    
-    
     
     
     samples = chars_to_onehot(text, char_to_idx).to(device)   
@@ -347,7 +341,6 @@ class MultilayerGRU(nn.Module):
         result =[]
         temp = torch.zeros_like(input, device=input.device)
         temp += input
-        #temp = list(temp.split(1, dim=1))
         
         for letter_index in range(seq_len):
             curr_x = temp[:, letter_index, :]           
